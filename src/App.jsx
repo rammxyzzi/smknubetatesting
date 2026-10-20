@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { supabase } from './supabase'
 
 const programs = [
   { code: 'TKJ', title: 'Teknik Komputer dan Jaringan', desc: 'Belajar jaringan komputer, server, sistem operasi, dan infrastruktur digital.', icon: '⌘' },
@@ -16,13 +17,70 @@ export default function App() {
   const [active, setActive] = useState('Beranda')
   const [mobileMenu, setMobileMenu] = useState(false)
   const [notice, setNotice] = useState('')
+  const [showLogin, setShowLogin] = useState(false)
+  const [authEmail, setAuthEmail] = useState('')
+  const [authPassword, setAuthPassword] = useState('')
+  const [authLoading, setAuthLoading] = useState(false)
+  const [authError, setAuthError] = useState('')
+  const [adminUser, setAdminUser] = useState(null)
+
+  const openAttendance = () => {
+    setShowLogin(true)
+    setAuthError('')
+    setAuthPassword('')
+    setMobileMenu(false)
+  }
+
+  const handleAdminLogin = async (event) => {
+    event.preventDefault()
+    setAuthLoading(true)
+    setAuthError('')
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: authEmail.trim(),
+        password: authPassword,
+      })
+      if (error) throw error
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('full_name, role')
+        .eq('user_id', data.user.id)
+        .single()
+      if (profileError || !profile) {
+        await supabase.auth.signOut()
+        throw new Error('Profil akun tidak ditemukan. Periksa tabel profiles di Supabase.')
+      }
+      if (profile.role !== 'admin') {
+        await supabase.auth.signOut()
+        throw new Error('Akun ini bukan admin. Akses dashboard ditolak.')
+      }
+      setAdminUser({ id: data.user.id, email: data.user.email, fullName: profile.full_name })
+      setShowLogin(false)
+      setAuthPassword('')
+      setNotice('Login admin berhasil. Selamat datang, ' + profile.full_name + '!')
+    } catch (error) {
+      setAuthError(error.message || 'Login gagal. Coba periksa email dan password.')
+    } finally {
+      setAuthLoading(false)
+    }
+  }
+
+  const handleAdminLogout = async () => {
+    const { error } = await supabase.auth.signOut()
+    if (error) {
+      setNotice('Logout gagal: ' + error.message)
+      return
+    }
+    setAdminUser(null)
+    setNotice('Lu berhasil logout dari akun admin.')
+  }
 
   const goTo = (item, sectionId) => {
     setActive(item)
     setMobileMenu(false)
     setNotice('')
     if (sectionId) document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth' })
-    else if (item === 'Absensi') setNotice('Fitur absensi belum aktif. Tahap berikutnya kita hubungkan login, biodata, dan Supabase.')
+    else if (item === 'Absensi') openAttendance()
   }
 
   const nav = [
@@ -223,6 +281,52 @@ export default function App() {
           </div>
         </section>
       </main>
+
+      {(showLogin || adminUser) && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={adminUser ? 'Dashboard admin' : 'Login admin'}
+          onClick={(event) => { if (event.target === event.currentTarget && !adminUser) setShowLogin(false) }}
+          style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(7, 22, 15, 0.72)', display: 'grid', placeItems: 'center', padding: 18, overflowY: 'auto' }}
+        >
+          <div style={{ width: '100%', maxWidth: 520, background: '#fff', color: '#173b2b', borderRadius: 22, padding: 24, boxShadow: '0 24px 80px rgba(0,0,0,.28)', position: 'relative' }}>
+            <button
+              onClick={() => { if (adminUser) handleAdminLogout(); else setShowLogin(false) }}
+              aria-label={adminUser ? 'Logout' : 'Tutup'}
+              style={{ position: 'absolute', right: 16, top: 14, border: 0, background: '#edf4ef', borderRadius: 999, width: 36, height: 36, cursor: 'pointer', fontSize: 20, color: '#173b2b' }}
+            >{adminUser ? '↪' : '×'}</button>
+            {adminUser ? (
+              <>
+                <div style={{ display: 'inline-block', background: '#e2f4e8', color: '#207246', borderRadius: 999, padding: '7px 12px', fontSize: 12, fontWeight: 700, letterSpacing: 1 }}>ADMIN TERVERIFIKASI</div>
+                <h2 style={{ margin: '18px 0 8px', fontSize: 28 }}>Dashboard Admin</h2>
+                <p style={{ color: '#607367', lineHeight: 1.6, marginTop: 0 }}>Halo, {adminUser.fullName}. Lu login sebagai admin dengan akun {adminUser.email}.</p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(135px, 1fr))', gap: 12, margin: '22px 0' }}>
+                  <div style={{ background: '#f2f7f3', padding: 16, borderRadius: 14 }}><div style={{ fontSize: 12, color: '#607367' }}>STATUS</div><strong style={{ display: 'block', marginTop: 6 }}>Terhubung</strong></div>
+                  <div style={{ background: '#f2f7f3', padding: 16, borderRadius: 14 }}><div style={{ fontSize: 12, color: '#607367' }}>HAK AKSES</div><strong style={{ display: 'block', marginTop: 6 }}>Admin</strong></div>
+                </div>
+                <p style={{ background: '#fff8e7', color: '#755719', padding: 13, borderRadius: 12, fontSize: 13, lineHeight: 1.6 }}>Dashboard dasar aktif. Pengelolaan data siswa dan absensi belum ditambahkan, jadi belum ada data yang bisa diedit dari sini.</p>
+                <button onClick={handleAdminLogout} style={{ width: '100%', border: 0, borderRadius: 12, padding: 13, background: '#17683d', color: '#fff', fontWeight: 700, cursor: 'pointer', marginTop: 10 }}>Logout</button>
+              </>
+            ) : (
+              <>
+                <div style={{ display: 'inline-block', background: '#e2f4e8', color: '#207246', borderRadius: 999, padding: '7px 12px', fontSize: 12, fontWeight: 700, letterSpacing: 1 }}>PORTAL SMK NU</div>
+                <h2 style={{ margin: '18px 0 8px', fontSize: 28 }}>Login Admin</h2>
+                <p style={{ color: '#607367', lineHeight: 1.6, marginTop: 0 }}>Masuk menggunakan akun yang sudah terdaftar di Supabase Authentication.</p>
+                <form onSubmit={handleAdminLogin}>
+                  <label htmlFor="admin-email" style={{ display: 'block', fontSize: 13, fontWeight: 700, margin: '18px 0 7px' }}>Email admin</label>
+                  <input id="admin-email" type="email" autoComplete="username" required value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} placeholder="admin@sekolah.sch.id" style={{ width: '100%', boxSizing: 'border-box', border: '1px solid #d4e0d7', borderRadius: 11, padding: 13, fontSize: 15, outlineColor: '#21804c' }} />
+                  <label htmlFor="admin-password" style={{ display: 'block', fontSize: 13, fontWeight: 700, margin: '16px 0 7px' }}>Password</label>
+                  <input id="admin-password" type="password" autoComplete="current-password" required value={authPassword} onChange={(e) => setAuthPassword(e.target.value)} placeholder="Masukkan password" style={{ width: '100%', boxSizing: 'border-box', border: '1px solid #d4e0d7', borderRadius: 11, padding: 13, fontSize: 15, outlineColor: '#21804c' }} />
+                  {authError && <p role="alert" style={{ background: '#fff0f0', color: '#a12b2b', padding: 12, borderRadius: 10, fontSize: 13, lineHeight: 1.5 }}>{authError}</p>}
+                  <button type="submit" disabled={authLoading} style={{ width: '100%', border: 0, borderRadius: 12, padding: 14, background: authLoading ? '#739984' : '#17683d', color: '#fff', fontWeight: 700, cursor: authLoading ? 'wait' : 'pointer', marginTop: 20 }}>{authLoading ? 'Memeriksa akun...' : 'Login sebagai Admin'}</button>
+                </form>
+                <p style={{ color: '#718176', fontSize: 12, lineHeight: 1.6, marginBottom: 0 }}>Akses admin diberikan hanya jika role akun di tabel profiles adalah admin.</p>
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       {notice && (
         <div className="toast" role="status">
