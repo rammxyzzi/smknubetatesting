@@ -6,8 +6,12 @@ export const supabase = createClient(
 )
 
 // Siswa login pakai NIS -> diubah jadi email internal.
-// Kalau akun siswa kamu dibuat dengan email lain, ubah domain di sini.
-export const toEmail = (id) => (id.includes('@') ? id.trim() : `${id.trim()}@smkyapimu`)
+// Domain ini HARUS sama dengan EMAIL_DOMAIN di supabase/functions/create-students/index.ts
+export const EMAIL_DOMAIN = 'smknughofarona'
+export const toEmail = (id) => {
+  const v = id.trim()
+  return v.includes('@') ? v : `${v.toLowerCase()}@${EMAIL_DOMAIN}`
+}
 
 export const normRole = (r) => {
   const v = (r || '').toLowerCase()
