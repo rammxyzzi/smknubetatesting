@@ -228,27 +228,4 @@ h1,h2,h3 { font-family: Manrope,sans-serif; }
   .stat small { font-size: 9px; line-height: 1.4; }
   .section { padding: 65px 0; }
   .intro-grid,.service-grid { grid-template-columns: 1fr; gap: 42px; }
-  .intro-visual { padding-right: 14px; }
-  .visual-panel { height: 310px; }
-  .school-building { transform: translateX(-50%) scale(.83); transform-origin: bottom center; }
-  .experience-card { padding: 14px 17px; font-size: 12px; }
-  .intro-copy h2,.section-heading h2,.service-copy h2,.cta-inner h2 { font-size: 32px; }
-  .section-heading { align-items: flex-start; flex-direction: column; gap: 15px; margin-bottom: 26px; }
-  .section-heading > p { max-width: 100%; }
-  .program-grid,.news-grid { grid-template-columns: 1fr; }
-  .program-card { padding: 22px; }
-  .program-card p { min-height: auto; }
-  .program-icon { margin-bottom: 18px; }
-  .service-grid { gap: 35px; }
-  .attendance-preview { padding: 22px 18px; }
-  .news-art { height: 120px; }
-  .news-card p { min-height: auto; }
-  .cta-section { padding: 45px 0; }
-  .cta-inner { align-items: flex-start; flex-direction: column; }
-  .cta-inner .button { width: 100%; }
-  .footer-main { align-items: flex-start; flex-direction: column; gap: 18px; }
-  .footer-bottom { flex-direction: column; gap: 8px; line-height: 1.6; }
-}
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; }
-}
+  .intro-visual { padding-ri
