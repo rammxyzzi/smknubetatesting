@@ -234,6 +234,71 @@ function Sesi({ classes, adminId }) {
   </>)
 }
 
+/* ---------------- Akun siswa (khusus admin) ---------------- */
+function Akun({ classes }) {
+  const [text, setText] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [results, setResults] = useState(null)
+  const [err, setErr] = useState('')
+
+  const parse = () =>
+    text.split('\n').map((l) => l.trim()).filter(Boolean)
+      .map((l) => l.split(/\t|;|,/).map((x) => x.trim()))
+      .filter((p, i) => !(i === 0 && /^nis$/i.test(p[0])))
+      .map((p) => ({ nis: p[0], nama: p[1], kelas: p[2], password: p[3] || undefined }))
+
+  const submit = async () => {
+    const list = parse()
+    if (!list.length) { setErr('Isi daftar siswa dulu.'); return }
+    setBusy(true); setErr(''); setResults(null)
+    const all = []
+    for (let i = 0; i < list.length; i += 30) {
+      const { data, error } = await supabase.functions.invoke('create-students', { body: { students: list.slice(i, i + 30) } })
+      if (error || !data?.results) {
+        setErr('Gagal memanggil fungsi pembuat akun. Pastikan fungsi create-students sudah dipasang dan kamu login sebagai admin.')
+        break
+      }
+      all.push(...data.results)
+    }
+    setResults(all); setBusy(false)
+  }
+
+  const copy = () => {
+    const rows = results.filter((r) => r.status === 'dibuat')
+      .map((r) => [r.nis, r.nama, r.kelas, r.password].join('\t')).join('\n')
+    navigator.clipboard?.writeText('NIS\tNama\tKelas\tPassword\n' + rows)
+  }
+
+  return (<>
+    <p className="pt-muted">Satu siswa per baris: <b>NIS, Nama, Kelas</b> (boleh tempel dari Excel). Password opsional sebagai kolom ke-4, kalau kosong dibuat otomatis.</p>
+    <p className="pt-muted">Kelas yang tersedia: {classes.map((c) => c.name).join(', ') || '(belum ada)'}</p>
+    <textarea className="pt-textarea" value={text} onChange={(e) => setText(e.target.value)}
+      placeholder={'12345, Budi Santoso, XI TKJ 1\n12346, Siti Aminah, XI RPL 1'} />
+    <div className="pt-actions">
+      <button className="pt-btn" onClick={submit} disabled={busy}>{busy ? 'Membuat akun…' : 'Buat akun'}</button>
+    </div>
+    {err && <div className="pt-error">{err}</div>}
+    {results && (<>
+      <div className="pt-note">Password hanya ditampilkan sekarang. Salin dan bagikan ke siswa sebelum menutup halaman ini.</div>
+      <div className="pt-actions"><button className="pt-btn pt-btn-ghost" onClick={copy}>Salin yang berhasil dibuat</button></div>
+      <div className="pt-table-wrap">
+        <table className="pt-table">
+          <thead><tr><th>NIS</th><th>Nama</th><th>Hasil</th><th>Password</th></tr></thead>
+          <tbody>
+            {results.map((r, i) => (
+              <tr key={i}>
+                <td>{r.nis}</td><td>{r.nama}</td>
+                <td>{r.status}{r.pesan ? ` · ${r.pesan}` : ''}</td>
+                <td>{r.password ?? '—'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>)}
+  </>)
+}
+
 /* ---------------- Shell ---------------- */
 export default function AdminPanel({ profile, onLogout }) {
   const isAdmin = profile.role === 'admin'
@@ -257,7 +322,7 @@ export default function AdminPanel({ profile, onLogout }) {
     })()
   }, [])
 
-  const tabs = [['rekap', 'Rekap'], ['koreksi', 'Koreksi status'], ...(isAdmin ? [['sesi', 'Sesi absen']] : [])]
+  const tabs = [['rekap', 'Rekap'], ['koreksi', 'Koreksi status'], ...(isAdmin ? [['sesi', 'Sesi absen'], ['akun', 'Akun siswa']] : [])]
 
   return (
     <div className="pt-wide">
@@ -275,6 +340,7 @@ export default function AdminPanel({ profile, onLogout }) {
         {tab === 'rekap' && <Rekap classes={classes} students={students} isAdmin={isAdmin} />}
         {tab === 'koreksi' && <Koreksi classes={classes} students={students} />}
         {tab === 'sesi' && isAdmin && <Sesi classes={classes} adminId={profile.user_id} />}
+        {tab === 'akun' && isAdmin && <Akun classes={classes} />}
       </>)}
     </div>
   )
