@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Portal from './Portal.jsx'
 
 const programs = [
@@ -27,6 +27,27 @@ export default function App() {
     else if (item === 'Absensi') setView('portal')
   }
 
+  // Efek muncul halus saat discroll. Hanya untuk bagian yang belum terlihat di layar.
+  useEffect(() => {
+    if (view !== 'landing') return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || !('IntersectionObserver' in window)) return
+    const targets = document.querySelectorAll(
+      '.stat, .intro-visual, .intro-copy, .section-heading, .program-card, .service-copy, .attendance-preview, .news-card, .cta-inner'
+    )
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((e) => {
+        if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target) }
+      })
+    }, { threshold: 0.12, rootMargin: '0px 0px -6% 0px' })
+    targets.forEach((el, i) => {
+      if (el.getBoundingClientRect().top < window.innerHeight * 0.92) return
+      el.classList.add('reveal')
+      el.style.setProperty('--d', `${(i % 3) * 70}ms`)
+      io.observe(el)
+    })
+    return () => io.disconnect()
+  }, [view])
+
   const nav = [
     { label: 'Beranda', id: 'beranda' },
     { label: 'Profil Sekolah', id: 'profil' },
@@ -49,10 +70,10 @@ export default function App() {
       <header className="header">
         <div className="container nav-wrap">
           <button className="brand" onClick={() => goTo('Beranda', 'beranda')} aria-label="Kembali ke beranda">
-            <span className="brand-mark">NU</span>
+            <img className="brand-logo" src="/logo.png" alt="Logo SMK NU Ghofarona Pusakajaya" />
             <span className="brand-copy">
               <strong>SMK NU</strong>
-              <small>PORTAL SEKOLAH</small>
+              <small>GHOFARONA PUSAKAJAYA</small>
             </span>
           </button>
 
@@ -238,12 +259,12 @@ export default function App() {
       <footer className="footer">
         <div className="container footer-main">
           <button className="brand footer-brand" onClick={() => goTo('Beranda', 'beranda')}>
-            <span className="brand-mark">NU</span><span className="brand-copy"><strong>SMK NU</strong><small>PORTAL SEKOLAH</small></span>
+            <img className="brand-logo" src="/logo.png" alt="Logo SMK NU Ghofarona Pusakajaya" /><span className="brand-copy"><strong>SMK NU</strong><small>GHOFARONA PUSAKAJAYA</small></span>
           </button>
           <p>Portal informasi dan layanan siswa.<br />Mendukung pembelajaran, karakter, dan masa depan.</p>
           <div className="footer-links"><button onClick={() => goTo('Profil Sekolah', 'profil')}>Profil</button><button onClick={() => goTo('Jurusan', 'jurusan')}>Jurusan</button><button onClick={() => goTo('Informasi', 'informasi')}>Informasi</button></div>
         </div>
-        <div className="container footer-bottom"><span>© {new Date().getFullYear()} SMK NU. Template awal website.</span><span>Dibuat untuk dikembangkan lebih lanjut.</span></div>
+        <div className="container footer-bottom"><span>© {new Date().getFullYear()} SMK NU Ghofarona Pusakajaya. Template awal website.</span><span>Dibuat untuk dikembangkan lebih lanjut.</span></div>
       </footer>
     </div>
   )
