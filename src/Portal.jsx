@@ -13,8 +13,12 @@ function Login({ onBack }) {
   const submit = async (e) => {
     e.preventDefault()
     setBusy(true); setErr('')
-    const { error } = await supabase.auth.signInWithPassword({ email: toEmail(id), password: pw })
-    if (error) setErr('NIS/email atau password salah.')
+    const { error } = await supabase.auth.signInWithPassword({ email: toEmail(id), password: pw.trim() })
+    if (error) {
+      setErr(error.message === 'Invalid login credentials'
+        ? 'NIS/email atau password salah.'
+        : `Gagal masuk: ${error.message}`)
+    }
     setBusy(false)
   }
 
@@ -24,8 +28,8 @@ function Login({ onBack }) {
         <img className="pt-logo" src="/logo.png" alt="Logo SMK NU Ghofarona Pusakajaya" />
         <h2 style={{ textAlign: 'center', margin: 0 }}>Masuk</h2>
         <p className="pt-muted" style={{ textAlign: 'center' }}>SMK NU Ghofarona Pusakajaya</p>
-        <input placeholder="NIS atau email" value={id} onChange={(e) => setId(e.target.value)} autoComplete="username" required />
-        <input type="password" placeholder="Password" value={pw} onChange={(e) => setPw(e.target.value)} autoComplete="current-password" required />
+        <input placeholder="NIS atau email" value={id} onChange={(e) => setId(e.target.value)} autoComplete="username" autoCapitalize="none" autoCorrect="off" spellCheck={false} required />
+        <input type="password" placeholder="Password" value={pw} onChange={(e) => setPw(e.target.value)} autoComplete="current-password" autoCapitalize="none" autoCorrect="off" spellCheck={false} required />
         {err && <div className="pt-error">{err}</div>}
         <button className="pt-btn" disabled={busy}>{busy ? 'Memproses…' : 'Masuk'}</button>
         <button type="button" className="pt-link" onClick={onBack}>← Kembali ke beranda</button>
