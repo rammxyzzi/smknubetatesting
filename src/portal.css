@@ -24,3 +24,9 @@
 .pt-tab.active{background:#123b2d;color:#fff;border-color:#123b2d}
 .pt-btn-sm{padding:8px 12px;font-size:14px}
 .pt-table select{padding:8px;border:1px solid #cfd8d3;border-radius:8px;font-size:15px}
+
+.pt-logo{display:block;width:72px;height:auto;margin:0 auto 4px}
+.pt-textarea{width:100%;min-height:150px;padding:12px;border:1px solid #cfd8d3;border-radius:10px;font:14px/1.5 ui-monospace,monospace;resize:vertical}
+.pt-note{background:#fff7e0;color:#6b4e00;padding:12px;border-radius:10px;font-size:13px;margin:12px 0}
+.pt-actions{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
+.pt-btn-ghost{background:#fff;color:#123b2d;border:1px solid #123b2d}
