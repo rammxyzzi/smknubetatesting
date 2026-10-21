@@ -21,8 +21,9 @@ function Login({ onBack }) {
   return (
     <div className="pt-center">
       <form className="pt-card" onSubmit={submit}>
-        <h2>Masuk</h2>
-        <p className="pt-muted">Gunakan akun sekolah kamu.</p>
+        <img className="pt-logo" src="/logo.png" alt="Logo SMK NU Ghofarona Pusakajaya" />
+        <h2 style={{ textAlign: 'center', margin: 0 }}>Masuk</h2>
+        <p className="pt-muted" style={{ textAlign: 'center' }}>SMK NU Ghofarona Pusakajaya</p>
         <input placeholder="NIS atau email" value={id} onChange={(e) => setId(e.target.value)} autoComplete="username" required />
         <input type="password" placeholder="Password" value={pw} onChange={(e) => setPw(e.target.value)} autoComplete="current-password" required />
         {err && <div className="pt-error">{err}</div>}
